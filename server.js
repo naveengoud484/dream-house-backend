@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./db");
 const Buyer = require("./buyer");
+const path = require("path");
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -141,6 +143,14 @@ app.delete("/api/bookings/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
+});
+
+// Serve static files
+app.use(express.static(path.join(__dirname, "./")));
+
+// Root route to serve index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
