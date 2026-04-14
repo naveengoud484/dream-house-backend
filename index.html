@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dream House Builder</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    } /* [web:50] */
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      color: #222;
+      background-image: url("https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg");
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+    }
+
+    .page-overlay {
+      min-height: 100vh;
+      background: rgba(0,0,0,0.35);
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+
+    /* Header */
+    .header { background: transparent; color: white; padding: 0.75rem 0; }
+    .header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status-filter-btn {
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+      background: white;
+      color: black;
+      transition: background 0.15s, color 0.15s;
+    }
+    .status-filter-btn.active {
+      background: #ffcc00;
+      color: #003366;
+    }
+
+    .header h1 { font-size: 1.4rem; white-space: nowrap; }
+
+    .header nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 1.2rem;
+      font-size: 0.95rem;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg,transparent, rgba(152, 203, 248, 0.9));
+      color: white;
+      padding: 4rem 0;
+      text-align: center;
+    }
+    .hero h2 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .hero p { font-size: 1.2rem; }
+
+    /* Projects Section */
+    .projects-section { padding: 3rem 0; }
+    .projects-section h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+    }
+    .filters button {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 20px;
+      background: #003366;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .filters button.active { background: #ff6600; }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .project-card {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+    .project-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    }
+
+    .project-image {
+      height: 180px;
+      overflow: hidden;
+    }
+    .project-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .project-info { padding: 1rem; }
+    .project-info h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+    .project-info p { font-size: 0.9rem; color: #555; margin-bottom: 0.5rem; }
+    .project-info .price { font-weight: bold; color: #003366; font-size: 1rem; }
+    .project-info .category { font-size: 0.8rem; color: #999; }
+
+    .project-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .project-actions button {
+      flex: 1;
+      padding: 0.5rem 0.8rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .project-actions button:hover { opacity: 0.85; }
+    .project-actions button.view { background: #003366; color: white; }
+    .project-actions button.book { background: #ff6600; color: white; }
+    .project-actions button.sold-toggle { background: #28a745; color: white; }
+    .project-actions button.cancel-toggle { background: #dc3545; color: white; }
+
+    .status-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+    }
+    .status-badge.sold     { background: #28a745; }
+    .status-badge.cancelled{ background: #dc3545; }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 14px;
+      width: 92%;
+      max-width: 500px;
+      padding: 2rem;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .modal h2 { font-size: 1.4rem; color: #003366; margin-bottom: 0.3rem; }
+    .modal .modal-subtitle { font-size: 0.9rem; color: #777; margin-bottom: 1.2rem; }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #555;
+    }
+    .modal-close:hover { color: #000; }
+
+    .house-details-block {
+      background: #f0f4ff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .house-details-block .icon { font-size: 2rem; }
+    .house-details-block .info h3 { font-size: 1rem; color: #003366; }
+    .house-details-block .info p {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.2rem;
+    }
+    .house-details-block .info .price-tag {
+      font-weight: bold;
+      color: #ff6600;
+      font-size: 1rem;
+      margin-top: 0.3rem;
+    }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: #333;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #003366;
+    }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    .payment-options-group {
+      margin-bottom: 1rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      background: #f7f7ff;
+      border: 1px solid #e0e0ff;
+    }
+    .payment-options-group legend {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+      padding: 0 0.2rem;
+    }
+    .payment-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      margin-top: 0.4rem;
+    }
+    .payment-row label {
+      font-size: 0.86rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      cursor: pointer;
+    }
+    .payment-row input[type="radio"] { cursor: pointer; }
+    .other-payment-input { margin-top: 0.6rem; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.75rem;
+      background: #003366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #002244; }
+    .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+
+    .form-msg {
+      margin-top: 0.8rem;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      text-align: center;
+      display: none;
+    }
+    .form-msg.success { background: #d4edda; color: #155724; display: block; }
+    .form-msg.error   { background: #f8d7da; color: #721c24; display: block; }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.95rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row span:first-child { color: #555; }
+    .detail-row span:last-child { font-weight: 600; color: #222; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .badge.house    { background: #cce5ff; color: #004085; }
+    .badge.villa    { background: #fff3cd; color: #856404; }
+    .badge.bungalow { background: #d4edda; color: #155724; }
+
+    /* Contact section */
+    .contact-section {
+      padding: 3rem 0;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+    } /* [web:51] */
+
+    .contact-section h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .contact-info h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .contact-info p {
+      margin-bottom: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .contact-info a {
+      color: #ffcc00;
+      text-decoration: none;
+    }
+
+    .contact-form h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .contact-form form label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 0.8rem;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+
+    .contact-form textarea { resize: vertical; }
+
+    .contact-form .btn-submit {
+      width: 100%;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 6px;
+      background: #ff6600;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .contact-form .btn-submit:hover {
+      background: #e05500;
+    }
+
+    .footer {
+      background: rgba(0,51,102,0.9);
+      color: white;
+      padding: 1.5rem 0;
+      text-align: center;
+      margin-top: 0;
+    }
+
+    @media (max-width: 768px) {
+      .header .container {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .header nav a { margin-left: 0.6rem; }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-overlay">
+    <header class="header">
+      <div class="container">
+        <div class="header-left">
+          <button class="status-filter-btn active" data-status="all">All</button>
+          <button class="status-filter-btn" data-status="sold">Sold</button>
+          <button class="status-filter-btn" data-status="unsold">Unsold</button>
+        </div>
+        <h1>Dream House Builder</h1>
+        <nav>
+          <a href="#home">Home</a>
+          <a href="#projects">Houses & Villas</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <section id="home" class="hero">
+      <div class="container">
+        <h2>Build Your Dream Home</h2>
+        <p>Choose from 12 beautifully designed house, villa, and bungalow options.</p>
+      </div>
+    </section>
+
+    <section id="projects" class="projects-section">
+      <div class="container">
+        <h2>Our Home Designs</h2>
+        <div class="filters">
+          <button data-filter="all" class="active">All Types</button>
+          <button data-filter="house">Houses</button>
+          <button data-filter="villa">Villas</button>
+          <button data-filter="bungalow">Bungalows</button>
+        </div>
+        <div class="projects-grid" id="projects-grid"></div>
+      </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact" class="contact-section">
+      <div class="container">
+        <h2>Contact Our Company</h2>
+
+        <div class="contact-grid">
+          <div class="contact-info">
+            <h3>Dream House Builder Pvt. Ltd.</h3>
+            <p>Rajkot, Gujarat, India</p>
+            <p><strong>Phone:</strong> <a href="tel:+919876543210">+91 98765 43210</a></p>
+            <p><strong>Email:</strong> <a href="mailto:info@dreamhousebuilder.com">info@dreamhousebuilder.com</a></p>
+            <p><strong>Office Hours:</strong> Mon–Sat, 10:00 AM – 7:00 PM</p>
+          </div>
+
+          <div class="contact-form">
+            <h3>Send us a message</h3>
+            <form>
+              <label for="cname">Your Name</label>
+              <input type="text" id="cname" placeholder="Enter your name" />
+
+              <label for="cemail">Your Email</label>
+              <input type="email" id="cemail" placeholder="Enter your email" />
+
+              <label for="cmsg">Message</label>
+              <textarea id="cmsg" rows="4" placeholder="Tell us about your dream home"></textarea>
+
+              <button type="button" class="btn-submit">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2026 Dream House Builder. All rights reserved. Rajkot , Gujarat</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- VIEW DETAILS MODAL -->
+  <div class="overlay" id="details-overlay">
+    <div class="modal" id="details-modal">
+      <button class="modal-close" onclick="closeModal('details-overlay')">&#x2715;</button>
+      <h2 id="details-title">House Details</h2>
+      <p class="modal-subtitle">Primary buyer and property information</p>
+      <div id="details-content"></div>
+      <button class="btn-submit" style="margin-top:1.2rem" id="details-book-btn">
+        Book / Edit Buyer
+      </button>
+    </div>
+  </div>
+
+  <!-- BOOKING / BUY NOW MODAL -->
+  <div class="overlay" id="book-overlay">
+    <div class="modal" id="book-modal">
+      <button class="modal-close" onclick="closeModal('book-overlay')">&#x2715;</button>
+      <h2>Buyer Primary Details</h2>
+      <p class="modal-subtitle">Enter buyer information and payment option.</p>
+
+      <div class="house-details-block" id="book-house-summary"></div>
+
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" placeholder="e.g. Rajan Mehta" />
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="e.g. rajan@email.com" />
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number (10 digits)</label>
+        <input type="tel" id="phone" placeholder="e.g. 9876543210" maxlength="10" />
+      </div>
+      <div class="form-group">
+        <label for="address">Current Address</label>
+        <textarea id="address" placeholder="Enter buyer address"></textarea>
+      </div>
+
+      <fieldset class="payment-options-group">
+        <legend>Choose Payment Option</legend>
+        <div class="payment-row">
+          <label><input type="radio" name="paymentOption" value="emi" checked /> EMI</label>
+          <label><input type="radio" name="paymentOption" value="full" /> Full payment</label>
+          <label><input type="radio" name="paymentOption" value="installments" /> Installments</label>
+          <label><input type="radio" name="paymentOption" value="bank_loan" /> Bank loan</label>
+          <label><input type="radio" name="paymentOption" value="other" /> Other</label>
+        </div>
+        <div class="other-payment-input" id="other-payment-wrapper" style="display:none;">
+          <input type="text" id="other-payment-text" placeholder="Enter other payment details" />
+        </div>
+      </fieldset>
+
+      <button class="btn-submit" id="submit-booking" onclick="submitBooking()">Save Buyer Details</button>
+      <div class="form-msg" id="form-msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5000/api";
+
+    // Example royalty-free style URLs (replace with any public URLs you like) [web:31][web:33]
+    const houseImg1 = "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg";
+    const houseImg2 = "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg";
+    const houseImg3 = "https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg";
+    const villaImg1 = "https://images.pexels.com/photos/261187/pexels-photo-261187.jpeg";
+    const villaImg2 = "https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg";
+    const villaImg3 = "https://images.pexels.com/photos/208736/pexels-photo-208736.jpeg";
+    const bungImg1  = "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg";
+    const bungImg2  = "https://images.pexels.com/photos/259580/pexels-photo-259580.jpeg";
+    const bungImg3  = "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg";
+
+    // add buyer field
+    const projects = [
+      { id:1,  name:"Classic 2BHK House",    type:"house",    price:"₹45,00,000",   bedrooms:2, area:"1200 sq.ft.", status:"unsold", image:houseImg1, buyer:null },
+      { id:2,  name:"Modern Villa 1",        type:"villa",    price:"₹1,20,00,000", bedrooms:4, area:"2200 sq.ft.", status:"unsold", image:villaImg1, buyer:null },
+      { id:3,  name:"Compact Bungalow",      type:"bungalow", price:"₹60,00,000",   bedrooms:3, area:"1600 sq.ft.", status:"unsold", image:bungImg1, buyer:null },
+      { id:4,  name:"Luxury Villa Deluxe",   type:"villa",    price:"₹1,80,00,000", bedrooms:5, area:"3000 sq.ft.", status:"unsold", image:villaImg2, buyer:null },
+      { id:5,  name:"Family 3BHK House",     type:"house",    price:"₹65,00,000",   bedrooms:3, area:"1500 sq.ft.", status:"unsold", image:houseImg2, buyer:null },
+      { id:6,  name:"Premium Villa 2",       type:"villa",    price:"₹2,00,00,000", bedrooms:6, area:"3500 sq.ft.", status:"unsold", image:villaImg3, buyer:null },
+      { id:7,  name:"Eco-Friendly Bungalow", type:"bungalow", price:"₹75,00,000",   bedrooms:3, area:"1800 sq.ft.", status:"unsold", image:bungImg2, buyer:null },
+      { id:8,  name:"Compact Studio House",  type:"house",    price:"₹30,00,000",   bedrooms:1, area:"800 sq.ft.",  status:"unsold", image:houseImg3, buyer:null },
+      { id:9,  name:"Farmhouse Villa",       type:"villa",    price:"₹1,50,00,000", bedrooms:4, area:"2500 sq.ft.", status:"unsold", image:villaImg1, buyer:null },
+      { id:10, name:"Heritage Bungalow",     type:"bungalow", price:"₹85,00,000",   bedrooms:3, area:"2000 sq.ft.", status:"unsold", image:bungImg3, buyer:null },
+      { id:11, name:"Compact 2BHK Villa",    type:"villa",    price:"₹95,00,000",   bedrooms:2, area:"1400 sq.ft.", status:"unsold", image:villaImg2, buyer:null },
+      { id:12, name:"Luxury Pool Bungalow",  type:"bungalow", price:"₹1,10,00,000", bedrooms:4, area:"2300 sq.ft.", status:"unsold", image:bungImg1, buyer:null },
+    ];
+
+    let currentHouseId = null;
+    let currentTypeFilter = "all";
+    let currentStatusFilter = "all";
+
+    function renderProjects() {
+      const grid = document.getElementById("projects-grid");
+      grid.innerHTML = "";
+
+      projects.forEach((p) => {
+        if (currentTypeFilter !== "all" && p.type !== currentTypeFilter) return;
+        if (currentStatusFilter !== "all" && p.status !== currentStatusFilter) return;
+
+        const card = document.createElement("div");
+        card.className = "project-card";
+
+        let statusBadge = "";
+        if (p.status === "sold") {
+          statusBadge = `<div class="status-badge sold">SOLD</div>`;
+        } else if (p.status === "cancelled") {
+          statusBadge = `<div class="status-badge cancelled">CANCELLED</div>`;
+        }
+
+        card.innerHTML = `
+          ${statusBadge}
+          <div class="project-image">
+            <img src="${p.image}" alt="${p.name}">
+          </div>
+          <div class="project-info">
+            <h3>${p.name}</h3>
+            <p>${p.bedrooms} Bed · ${p.area}</p>
+            <p class="price">${p.price}</p>
+            <p class="category">Type: ${p.type.charAt(0).toUpperCase() + p.type.slice(1)}</p>
+            <div class="project-actions">
+              <button class="view" onclick="openDetails(${p.id})">View Details</button>
+              <button class="book" onclick="openBooking(${p.id})">Book Now</button>
+              <button class="sold-toggle" onclick="markSold(${p.id})">Mark Sold</button>
+              <button class="cancel-toggle" onclick="markCancelled(${p.id})">Cancel</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    document.querySelectorAll(".filters button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filters button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentTypeFilter = btn.dataset.filter;
+        renderProjects();
+      });
+    });
+
+    document.querySelectorAll(".status-filter-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".status-filter-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentStatusFilter = btn.dataset.status;
+        renderProjects();
+      });
+    });
+
+    function markSold(id) {
+      const house = projects.find(p => p.id === id);
+      if (house) { house.status = "sold"; renderProjects(); }
+    }
+    function markCancelled(id) {
+      const house = projects.find(p => p.id === id);
+      if (house) { house.status = "cancelled"; renderProjects(); }
+    }
+
+    // Modal helpers
+    function openModal(id)  { document.getElementById(id).classList.add("active"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("active"); }
+
+    document.querySelectorAll(".overlay").forEach((ov) => {
+      ov.addEventListener("click", (e) => { if (e.target === ov) ov.classList.remove("active"); });
+    });
+
+    // View Details popup – show property + buyer info
+    function openDetails(id) {
+      currentHouseId = id;
+      const house = projects.find(p => p.id === id);
+      if (!house) return;
+
+      document.getElementById("details-title").textContent = house.name;
+
+      const buyer = house.buyer;
+      const buyerHtml = buyer ? `
+        <h3 style="margin-top:1rem;margin-bottom:0.5rem;">Buyer Primary Details</h3>
+        <div class="detail-row"><span>Name</span><span>${buyer.fullName}</span></div>
+        <div class="detail-row"><span>Email</span><span>${buyer.email}</span></div>
+        <div class="detail-row"><span>Phone</span><span>${buyer.phone}</span></div>
+        <div class="detail-row"><span>Payment</span><span>${buyer.paymentLabel}</span></div>
+      ` : `<p style="margin-top:1rem;">No buyer details saved yet. Click “Book / Edit Buyer” to add them.</p>`;
+
+      document.getElementById("details-content").innerHTML = `
+        <div class="detail-row">
+          <span>Type</span>
+          <span><span class="badge ${house.type}">${house.type}</span></span>
+        </div>
+        <div class="detail-row"><span>Price</span><span>${house.price}</span></div>
+        <div class="detail-row"><span>Bedrooms</span><span>${house.bedrooms} BHK</span></div>
+        <div class="detail-row"><span>Area</span><span>${house.area}</span></div>
+        <div class="detail-row">
+          <span>Status</span>
+          <span>${house.status === "sold" ? "Sold" : house.status === "cancelled" ? "Cancelled" : "Available"}</span>
+        </div>
+        ${buyerHtml}
+      `;
+
+      document.getElementById("details-book-btn").onclick = () => {
+        closeModal("details-overlay");
+        openBooking(id);
+      };
+
+      openModal("details-overlay");
+    }
+
+    function setupPaymentOptionToggle() {
+      const radios = document.querySelectorAll('input[name="paymentOption"]');
+      const otherWrapper = document.getElementById("other-payment-wrapper");
+      radios.forEach((r) => {
+        r.addEventListener("change", () => {
+          if (r.value === "other" && r.checked) {
+            otherWrapper.style.display = "block";
+          } else if (r.checked) {
+            otherWrapper.style.display = "none";
+          }
+        });
+      });
+    }
+
+    // Buy Now popup – enter buyer details
+    function openBooking(id) {
+      currentHouseId = id;
+      const house = projects.find(p => p.id === id);
+      if (!house) return;
+
+      document.getElementById("book-house-summary").innerHTML = `
+        <div class="icon">🏠</div>
+        <div class="info">
+          <h3>${house.name}</h3>
+          <p>${house.bedrooms} Bed · ${house.area}</p>
+          <p class="price-tag">${house.price}</p>
+        </div>
+      `;
+
+      const msg = document.getElementById("form-msg");
+      msg.className = "form-msg";
+      msg.textContent = "";
+
+      const buyer = house.buyer;
+      document.getElementById("fullName").value = buyer ? buyer.fullName : "";
+      document.getElementById("email").value    = buyer ? buyer.email    : "";
+      document.getElementById("phone").value    = buyer ? buyer.phone    : "";
+      document.getElementById("address").value  = buyer ? buyer.address  : "";
+
+      const radios = document.querySelectorAll('input[name="paymentOption"]');
+      let matched = false;
+      if (buyer && buyer.paymentOption) {
+        radios.forEach(r => {
+          if (r.value === buyer.paymentOption) { r.checked = true; matched = true; }
+        });
+        if (buyer.paymentOption === "other" && buyer.paymentDetails) {
+          document.getElementById("other-payment-wrapper").style.display = "block";
+          document.getElementById("other-payment-text").value = buyer.paymentDetails;
+        } else {
+          document.getElementById("other-payment-wrapper").style.display = "none";
+          document.getElementById("other-payment-text").value = "";
+        }
+      }
+      if (!matched) {
+        document.querySelector('input[name="paymentOption"][value="emi"]').checked = true;
+        document.getElementById("other-payment-wrapper").style.display = "none";
+        document.getElementById("other-payment-text").value = "";
+      }
+
+      document.getElementById("submit-booking").disabled = false;
+      document.getElementById("submit-booking").textContent = "Save Buyer Details";
+
+      openModal("book-overlay");
+    }
+
+    async function submitBooking() {
+      const fullName = document.getElementById("fullName").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const phone    = document.getElementById("phone").value.trim();
+      const address  = document.getElementById("address").value.trim();
+      const msg      = document.getElementById("form-msg");
+      const btn      = document.getElementById("submit-booking");
+
+      const paymentOptionRadio = document.querySelector('input[name="paymentOption"]:checked');
+      const paymentOption = paymentOptionRadio ? paymentOptionRadio.value : "";
+      const otherPaymentText = document.getElementById("other-payment-text").value.trim();
+
+      if (!fullName || !email || !phone || !address) {
+        msg.className = "form-msg error";
+        msg.textContent = "Please fill in all buyer details.";
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        msg.className = "form-msg error";
+        msg.textContent = "Please enter a valid email address.";
+        return;
+      }
+      if (!/^[0-9]{10}$/.test(phone)) {
+        msg.className = "form-msg error";
+        msg.textContent = "Please enter a valid 10-digit phone number.";
+        return;
+      }
+      if (!paymentOption) {
+        msg.className = "form-msg error";
+        msg.textContent = "Please select a payment option.";
+        return;
+      }
+      if (paymentOption === "other" && !otherPaymentText) {
+        msg.className = "form-msg error";
+        msg.textContent = "Please enter details for 'Other' payment option.";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      const house = projects.find(p => p.id === currentHouseId);
+      if (house) {
+        const labelMap = {
+          emi: "EMI",
+          full: "Full payment",
+          installments: "Installments",
+          bank_loan: "Bank loan",
+          other: "Other"
+        };
+        house.buyer = {
+          fullName,
+          email,
+          phone,
+          address,
+          paymentOption,
+          paymentDetails: paymentOption === "other" ? otherPaymentText : null,
+          paymentLabel: paymentOption === "other" && otherPaymentText
+            ? "Other (" + otherPaymentText + ")"
+            : labelMap[paymentOption] || "Unknown"
+        };
+        house.status = "sold";
+      }
+
+      try {
+        await fetch(`${API_BASE}/bookings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            houseId: currentHouseId,
+            fullName,
+            email,
+            phone,
+            address,
+            paymentOption,
+            paymentDetails: paymentOption === "other" ? otherPaymentText : null
+          }),
+        });
+      } catch (e) {
+        // ignore backend errors in demo
+      }
+
+      msg.className = "form-msg success";
+      msg.textContent = "Buyer details saved successfully.";
+      btn.textContent = "Saved";
+      renderProjects();
+    }
+
+    setupPaymentOptionToggle();
+    renderProjects();
+  </script>
+</body>
+</html>
